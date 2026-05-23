@@ -10,7 +10,9 @@
     "dev": "deno run --watch --allow-net --allow-read --allow-write --allow-env --env-file --allow-ffi main.ts",
     "start": "deno run --allow-net --allow-read --allow-write --allow-env --env-file main.ts",
     "add-user": "deno run --allow-read --allow-write --allow-env --env-file scripts/add-user.ts",
-    "test": "deno test"
+    "test": "deno test",
+    "tw:watch": "npx @tailwindcss/cli -i ./src/input.css -o ./static/tailwind.css --watch",
+    "tw:build": "npx @tailwindcss/cli -i ./src/input.css -o ./static/tailwind.css --minify"
   },
   "compilerOptions": {
     "jsx": "precompile",

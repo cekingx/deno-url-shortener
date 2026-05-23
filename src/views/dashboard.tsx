@@ -19,82 +19,46 @@ export function DashboardPage({
 }: DashboardPageProps) {
   return (
     <Layout title="Dashboard — URL Shortener">
-      <div
-        style={{
-          width: "100%",
-          maxWidth: "960px",
-          margin: "0 auto",
-          padding: "0 1.5rem",
-        }}
-      >
-        <nav
-          class="nav"
-          style={{ margin: "0 -1.5rem 2rem", padding: "1rem 1.5rem" }}
-        >
-          <span style={{ fontWeight: 600, fontSize: "1rem" }}>
-            URL Shortener
-          </span>
+      <div class="max-w-4xl mx-auto px-6">
+        <nav class="flex items-center justify-between bg-white border-b border-gray-200 mx-[-1.5rem] px-6 py-4 mb-8">
+          <span class="font-semibold text-base">URL Shortener</span>
           <form method="post" action="/logout">
             <button
+              class="px-4 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-300 rounded-md cursor-pointer transition-colors"
               type="submit"
-              style={{
-                width: "auto",
-                padding: "0.4rem 1rem",
-                fontSize: "0.875rem",
-                background: "#f3f4f6",
-                color: "#374151",
-                border: "1px solid #d1d5db",
-              }}
             >
               Logout
             </button>
           </form>
         </nav>
 
-        <section
-          style={{
-            background: "#fff",
-            borderRadius: "8px",
-            boxShadow: "0 2px 12px rgba(0,0,0,0.08)",
-            padding: "1.5rem 2rem",
-            marginBottom: "2rem",
-          }}
-        >
-          <h2 style={{ fontSize: "1rem", marginBottom: "1.25rem" }}>
-            Create a short link
-          </h2>
+        <section class="bg-white rounded-lg shadow-sm p-6 mb-8">
+          <h2 class="text-base font-semibold mb-5">Create a short link</h2>
 
           {success && (
-            <div
-              style={{
-                background: "#f0fdf4",
-                color: "#15803d",
-                border: "1px solid #bbf7d0",
-                borderRadius: "6px",
-                padding: "0.5rem 0.75rem",
-                fontSize: "0.875rem",
-                marginBottom: "1rem",
-              }}
-            >
+            <div class="bg-green-50 text-green-700 border border-green-200 rounded-md px-3 py-2 text-sm mb-4">
               Link created successfully.
             </div>
           )}
 
           {error === "invalid_url" && (
-            <div class="error">
+            <div class="bg-red-50 text-red-700 border border-red-200 rounded-md px-3 py-2 text-sm mb-4">
               Destination must be a valid URL starting with http:// or https://
             </div>
           )}
 
           {error === "duplicate_alias" && (
-            <div class="error">
+            <div class="bg-red-50 text-red-700 border border-red-200 rounded-md px-3 py-2 text-sm mb-4">
               That alias is already in use. Please choose a different one.
             </div>
           )}
 
           <form method="post" action="/admin/links">
-            <label for="destination">Destination URL</label>
+            <label class="block text-sm mb-1" for="destination">
+              Destination URL
+            </label>
             <input
+              class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm mb-4 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
               id="destination"
               name="destination"
               type="url"
@@ -103,13 +67,12 @@ export function DashboardPage({
               required
             />
 
-            <label for="alias">
+            <label class="block text-sm mb-1" for="alias">
               Custom alias{" "}
-              <span style={{ color: "#9ca3af", fontWeight: 400 }}>
-                (optional)
-              </span>
+              <span class="text-gray-400 font-normal">(optional)</span>
             </label>
             <input
+              class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm mb-4 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
               id="alias"
               name="alias"
               type="text"
@@ -117,26 +80,29 @@ export function DashboardPage({
               value={formValues.alias ?? ""}
             />
 
-            <label for="expires_at">
+            <label class="block text-sm mb-1" for="expires_at">
               Expiration date{" "}
-              <span style={{ color: "#9ca3af", fontWeight: 400 }}>
-                (optional)
-              </span>
+              <span class="text-gray-400 font-normal">(optional)</span>
             </label>
             <input
+              class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm mb-5 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
               id="expires_at"
               name="expires_at"
               type="datetime-local"
               value={formValues.expiresAt ?? ""}
-              style={{ marginBottom: "1.25rem" }}
             />
 
-            <button type="submit">Create link</button>
+            <button
+              class="px-5 py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-md text-sm font-medium cursor-pointer transition-colors"
+              type="submit"
+            >
+              Create link
+            </button>
           </form>
         </section>
 
         <section>
-          <p style={{ color: "#6b7280", fontSize: "0.9rem" }}>
+          <p class="text-gray-500 text-sm">
             No links yet. Create your first short link above.
           </p>
         </section>

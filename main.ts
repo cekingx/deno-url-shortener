@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { serveStatic } from "hono/deno";
 import { compare } from "@da/bcrypt";
 import { db } from "./src/db/client.ts";
 import { runMigrations } from "./src/db/schema.ts";
@@ -28,6 +29,8 @@ app.use("*", (c, next) => {
   c.set("authService", authService);
   return next();
 });
+
+app.use("/static/*", serveStatic({ root: "./" }));
 
 app.get("/login", handleLoginPage);
 app.post("/login", handleLogin);
