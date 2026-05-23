@@ -87,17 +87,20 @@ nginx-proxy-manager is the single external entry point. It handles TLS certifica
 
 ### Hono Application
 
-The application is a single Deno process organized in three strict layers. Every domain area (auth, links, redirect) must follow this layered structure — no layer may skip a layer below it, and no layer may reach upward.
+The application is a single Deno process organized in four strict layers. Every domain area (auth, links, redirect) must follow this layered structure — no layer may skip a layer below it, and no layer may reach upward.
 
 ```
-Handler  →  Service  →  Repository
+Handler  →  Service  →  Repository  →  Domain
 ```
 
 | Layer | Responsibility | May import |
 |-------|---------------|------------|
-| **Handler** (`src/handlers/`) | Parse HTTP request, call service, set cookies/redirects | Service interfaces only — no DB, no bcrypt, no JWT utils |
-| **Service** (`src/services/`) | Business logic, orchestration, validation | Repository interfaces and utility interfaces — no Hono, no HTTP |
-| **Repository** (`src/repositories/`) | All SQL queries — one repository per domain entity | DB client only |
+| **Handler** (`src/handlers/`) | Parse HTTP request, call service, set cookies/redirects | Service interfaces, domain classes |
+| **Service** (`src/services/`) | Business logic, orchestration, validation | Repository interfaces, domain classes, utility interfaces — no Hono, no HTTP |
+| **Repository** (`src/repositories/`) | All SQL queries — maps raw DB rows to domain objects | Domain classes, DB client only |
+| **Domain** (`src/domain/`) | Plain classes representing core business entities | Nothing — no framework, no DB, no HTTP |
+
+Domain classes are plain TypeScript classes with no dependencies. They carry only the properties that matter to business logic — column names and DB types are an implementation detail that stays inside the repository. The repository is the only layer that knows about raw SQL row shapes; it maps them to domain objects before returning.
 
 Dependencies are injected into services via constructor parameters typed as interfaces (not concrete classes). Concrete implementations are wired up once in `main.ts` and passed into the Hono context via a middleware — handlers retrieve them from `c.var`. This keeps every service unit-testable without a real database, real bcrypt calls, or a real JWT secret.
 
@@ -261,7 +264,7 @@ A service is testable because all its dependencies are injected interfaces. Test
 
 ```typescript
 // Stub factory pattern used in all service tests
-const makeRepo = (user?: UserRow): UserRepository => ({
+const makeRepo = (user?: User): UserRepository => ({
   findByUsername: () => user,
 })
 
@@ -285,6 +288,9 @@ Deno.test('login - returns error when password is wrong', async () => {
   const result = await service.login('user', 'wrong')
   expect(result).toBeInstanceOf(Error)
 })
+
+// Domain objects are constructed directly in tests — no raw row shapes
+const user = new User(1, 'hash')
 ```
 
 Test files live alongside the module they test (`auth.service.test.ts` next to `auth.service.ts`). The test runner is `deno task test`. Assertions use `@std/expect` for a Jest-compatible `expect` API.
@@ -307,7 +313,9 @@ url-shortener/
 │   │   └── schema.ts           # CREATE TABLE IF NOT EXISTS statements
 │   ├── middleware/
 │   │   └── auth.ts             # JWT cookie validation middleware
-│   ├── repositories/           # SQL queries — one file per domain entity
+│   ├── domain/                 # Plain domain classes — no framework, no DB deps
+│   │   └── user.ts             # User domain object
+│   ├── repositories/           # SQL queries — maps raw rows to domain objects
 │   │   └── user.repository.ts  # UserRepository interface + SqliteUserRepository
 │   ├── services/               # Business logic — unit testable, no HTTP/DB imports
 │   │   ├── auth.service.ts     # AuthService: login, verifyToken

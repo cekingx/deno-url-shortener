@@ -2,8 +2,9 @@ import { expect } from 'jsr:@std/expect'
 import { AuthService } from './auth.service.ts'
 import type { JwtUtils, PasswordUtils } from './auth.service.ts'
 import type { UserRepository } from '../repositories/user.repository.ts'
+import { User } from '../domain/user.ts'
 
-const makeRepo = (user?: { id: number; password_hash: string }): UserRepository => ({
+const makeRepo = (user?: User): UserRepository => ({
   findByUsername: () => user,
 })
 
@@ -25,7 +26,7 @@ Deno.test('login - returns error when user not found', async () => {
 
 Deno.test('login - returns error when password is wrong', async () => {
   const service = new AuthService(
-    makeRepo({ id: 1, password_hash: 'hash' }),
+    makeRepo(new User(1, 'user', 'hash')),
     makeJwt(),
     makePassword(false),
   )
@@ -35,7 +36,7 @@ Deno.test('login - returns error when password is wrong', async () => {
 
 Deno.test('login - returns token on valid credentials', async () => {
   const service = new AuthService(
-    makeRepo({ id: 1, password_hash: 'hash' }),
+    makeRepo(new User(1, 'user', 'hash')),
     makeJwt(),
     makePassword(true),
   )
@@ -51,7 +52,7 @@ Deno.test('login - signs token with correct user id', async () => {
       return Promise.resolve('token')
     },
   })
-  const service = new AuthService(makeRepo({ id: 42, password_hash: 'hash' }), jwt, makePassword(true))
+  const service = new AuthService(makeRepo(new User(42, 'user', 'hash')), jwt, makePassword(true))
   await service.login('user', 'pass')
   expect(capturedId).toBe(42)
 })

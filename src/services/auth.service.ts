@@ -1,4 +1,5 @@
 import type { UserRepository } from '../repositories/user.repository.ts'
+import type { User } from '../domain/user.ts'
 
 export interface JwtUtils {
   sign(userId: number): Promise<string>
@@ -20,7 +21,7 @@ export class AuthService {
     const user = this.repo.findByUsername(username)
     if (!user) return new Error('invalid credentials')
 
-    const valid = await this.password.compare(plainPassword, user.password_hash)
+    const valid = await this.password.compare(plainPassword, user.passwordHash)
     if (!valid) return new Error('invalid credentials')
 
     return this.jwt.sign(user.id)
