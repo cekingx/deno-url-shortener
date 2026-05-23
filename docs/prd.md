@@ -54,13 +54,13 @@ short links.
       submit button
 - [x] Owner is redirected to `/admin` dashboard after submitting valid
       credentials
-- [ ] Owner sees a generic "Invalid username or password" message when
+- [x] Owner sees a generic "Invalid username or password" message when
       submitting incorrect credentials — no hint about which field is wrong
-- [ ] Owner remains on the `/login` page after a failed login attempt, with the
+- [x] Owner remains on the `/login` page after a failed login attempt, with the
       form ready to retry
-- [ ] Owner visiting a protected route (e.g. `/admin`) without being logged in
+- [x] Owner visiting a protected route (e.g. `/admin`) without being logged in
       is redirected to `/login`
-- [ ] Owner's session persists for 7 days without needing to log in again
+- [x] Owner's session persists for 7 days without needing to log in again
 
 ---
 
