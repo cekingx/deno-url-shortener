@@ -1,4 +1,4 @@
-import type { Database } from '@db/sqlite'
+import type { Database } from "@db/sqlite";
 
 export function runMigrations(db: Database): void {
   db.exec(`
@@ -26,5 +26,5 @@ export function runMigrations(db: Database): void {
       link_id    INTEGER NOT NULL REFERENCES links(id) ON DELETE CASCADE,
       clicked_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
-  `)
+  `);
 }

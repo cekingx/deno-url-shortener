@@ -1,16 +1,17 @@
 type LayoutProps = {
-  title?: string
-  children: unknown
-}
+  title?: string;
+  children: unknown;
+};
 
-export function Layout({ title = 'URL Shortener', children }: LayoutProps) {
+export function Layout({ title = "URL Shortener", children }: LayoutProps) {
   return (
     <html lang="en">
       <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>{title}</title>
-        <style>{`
+        <style>
+          {`
           *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
           body {
             font-family: system-ui, sans-serif;
@@ -64,11 +65,12 @@ export function Layout({ title = 'URL Shortener', children }: LayoutProps) {
           table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
           th, td { text-align: left; padding: 0.75rem 1rem; border-bottom: 1px solid #e5e7eb; font-size: 0.9rem; }
           th { font-weight: 600; color: #6b7280; }
-        `}</style>
+        `}
+        </style>
       </head>
       <body>
         {children}
       </body>
     </html>
-  )
+  );
 }

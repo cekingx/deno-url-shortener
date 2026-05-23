@@ -1,8 +1,8 @@
-import { Layout } from './layout.tsx'
+import { Layout } from "./layout.tsx";
 
 type LoginPageProps = {
-  error?: string
-}
+  error?: string;
+};
 
 export function LoginPage({ error }: LoginPageProps) {
   return (
@@ -12,12 +12,24 @@ export function LoginPage({ error }: LoginPageProps) {
         {error && <p class="error">{error}</p>}
         <form action="/login" method="post">
           <label for="username">Username</label>
-          <input type="text" id="username" name="username" required autocomplete="username" />
+          <input
+            type="text"
+            id="username"
+            name="username"
+            required
+            autocomplete="username"
+          />
           <label for="password">Password</label>
-          <input type="password" id="password" name="password" required autocomplete="current-password" />
+          <input
+            type="password"
+            id="password"
+            name="password"
+            required
+            autocomplete="current-password"
+          />
           <button type="submit">Log in</button>
         </form>
       </div>
     </Layout>
-  )
+  );
 }

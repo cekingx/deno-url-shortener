@@ -1,6 +1,7 @@
 # url-shortener
 
-A personal URL shortener built with Deno and Hono. Converts long URLs into short, shareable links with an admin dashboard to manage them.
+A personal URL shortener built with Deno and Hono. Converts long URLs into
+short, shareable links with an admin dashboard to manage them.
 
 ## Features
 
@@ -51,11 +52,11 @@ Point your nginx-proxy-manager proxy host to the container on port `8001`.
 
 ## Environment Variables
 
-| Variable | Description |
-|----------|-------------|
-| `JWT_SECRET` | Secret key used to sign JWT session tokens |
-| `ADMIN_USERNAME` | Pre-populated admin username |
-| `ADMIN_PASSWORD_HASH` | bcrypt hash of the admin password |
+| Variable              | Description                                |
+| --------------------- | ------------------------------------------ |
+| `JWT_SECRET`          | Secret key used to sign JWT session tokens |
+| `ADMIN_USERNAME`      | Pre-populated admin username               |
+| `ADMIN_PASSWORD_HASH` | bcrypt hash of the admin password          |
 
 ## Project Structure
 
@@ -77,4 +78,5 @@ url-shortener/
 
 ## Documentation
 
-See [docs/technical-architecture.md](docs/technical-architecture.md) for a full system design overview.
+See [docs/technical-architecture.md](docs/technical-architecture.md) for a full
+system design overview.

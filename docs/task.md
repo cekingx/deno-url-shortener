@@ -1,8 +1,4 @@
-# Tasks: User Story — Owner Login
-
----
-
-## Task 1: Backend — Login Endpoint, JWT Issuance, and Auth Middleware
+## User Story: Owner Logout
 
 **Layer**: Backend
 
@@ -10,9 +6,10 @@
 
 ### User Story Context
 
-**As an** owner
-**I want to** log in with my username and password
-**So that** I can access the admin dashboard to manage my short links
+**As an** owner\
+**I want to** log out of the admin dashboard\
+**So that** my session is ended and my links are protected on shared or
+untrusted devices
 
 ---
 
@@ -20,77 +17,58 @@
 
 #### Endpoints
 
-**POST** `/login` — Validate credentials and issue a JWT session cookie
+**POST** `/auth/logout` — Clears the JWT cookie and ends the session
 
-- **Authentication**: None
-- **Request**:
-  ```json
-  {
-    "username": "string — the owner's username",
-    "password": "string — the owner's plaintext password"
-  }
-  ```
-- **Response (302)**:
-  - Redirects to `/admin`
-  - Sets `Set-Cookie` header: `token=<jwt>; HttpOnly; Secure; SameSite=Strict; Max-Age=604800`
+- **Authentication**: Required (JWT cookie must be present, but failure should
+  still clear cookie and redirect)
+- **Request**: No body
+- **Response (302)**: Redirect to `/login`
 - **Error Codes**:
-  - `401` — Invalid username or password (generic message, no field hint)
-  - `500` — Internal server error
+  - `302` — Always redirects to `/login`; no error state exposed to the client
 
-**POST** `/logout` — Clear the JWT cookie and end the session *(referenced here; implemented in the Owner Logout story)*
+#### Cookie Handling
 
-#### Middleware
+- Overwrite the `token` httpOnly cookie with an expired value (`Max-Age=0` or
+  `expires` in the past)
+- Cookie attributes must match the original: `httpOnly`, `Secure`,
+  `SameSite=Strict`
 
-- `authMiddleware` in `src/middleware/auth.ts` — Reads the `token` cookie, verifies the JWT signature and expiry claim, and attaches the user ID to the Hono context. Applied to all `/admin/*` and `/api/*` routes. Redirects unauthenticated requests to `/login` with a 302.
+#### Database Changes
 
-#### Utility Helpers
-
-- `signJwt(payload)` in `src/utils/jwt.ts` — Signs a JWT with HS256 using the `JWT_SECRET` env var; sets a 7-day expiry claim.
-- `verifyJwt(token)` in `src/utils/jwt.ts` — Verifies the token signature and expiry; returns the decoded payload or throws on failure.
-
-#### Handler
-
-- `handleLogin` in `src/handlers/auth.ts` — Receives POST body, queries the `users` table for the username, compares the password against `password_hash` with bcrypt, calls `signJwt`, and sets the cookie. Returns a generic error response on any failure.
-
-#### Database
-
-- `users` table must exist with columns: `id`, `username`, `password_hash`
-- Schema is initialized in `src/db/schema.ts` via `CREATE TABLE IF NOT EXISTS users`
-- No migration needed — schema is idempotent on startup
-- Credentials are pre-seeded; no INSERT logic is required in this task
+- None — no server-side session table exists; session state lives entirely in
+  the cookie and JWT claims
 
 ---
 
 ### Notes
 
-- `JWT_SECRET` must be provided as an environment variable and never committed to source control
-- bcrypt comparison must be constant-time to prevent timing attacks — use a well-maintained Deno bcrypt library
-- The generic error message ("Invalid username or password") must not distinguish between a wrong username and a wrong password
-- JWT payload should carry only `userId` and `exp`; no roles, emails, or other sensitive data
-- Cookie must be `HttpOnly`, `Secure`, `SameSite=Strict` — the frontend has no JavaScript access to the token
-- `authMiddleware` must be registered before any `/admin/*` or `/api/*` route handlers in `main.ts`
-- Task 2 (Frontend) depends on the `/login` POST endpoint being available
+- Cookie expiry is the sole invalidation mechanism — there is no server-side
+  revocation list
+- The logout handler must clear the cookie even if the JWT is already expired or
+  invalid; the handler should not reject the request due to a bad token
+- Auth middleware on `/admin/*` and `/api/*` routes already enforces that
+  expired/missing cookies redirect to `/login`, so a cleared cookie immediately
+  prevents further access on any tab upon the next request
+- "Logout on one tab prevents access on other tabs without a page reload
+  revealing protected content" is handled naturally by the cookie being cleared
+  — next navigation or API call from any tab will fail auth
 
 ---
 
 ### Implementation Tasks
 
-- [ ] Set up `src/db/client.ts` — SQLite connection singleton using Deno SQLite driver
-- [ ] Set up `src/db/schema.ts` — `CREATE TABLE IF NOT EXISTS users` statement, run on app startup in `main.ts`
-- [ ] Implement `signJwt` and `verifyJwt` in `src/utils/jwt.ts`
-- [ ] Implement `handleLogin` in `src/handlers/auth.ts` — credential lookup, bcrypt verify, JWT issuance, cookie set
-- [ ] Implement `authMiddleware` in `src/middleware/auth.ts` — JWT cookie extraction, verify, context attachment, redirect on failure
-- [ ] Register `POST /login` route and auth middleware in `main.ts`
-- [ ] Handle missing or malformed cookie in middleware without throwing unhandled errors
-- [ ] Write unit tests for `signJwt` / `verifyJwt` helpers
-- [ ] Write integration test: valid credentials → 302 to `/admin` + cookie set
-- [ ] Write integration test: invalid credentials → 401 with generic message
-- [ ] Write integration test: request to `/admin` without cookie → 302 to `/login`
-- [ ] Code review
+- [ ] Add `POST /auth/logout` route to the Hono app (e.g. in
+      `src/handlers/auth.tsx`)
+- [ ] Implement logout handler: overwrite `token` cookie with expired value,
+      then redirect 302 to `/login`
+- [ ] Ensure cookie attributes (`httpOnly`, `Secure`, `SameSite=Strict`) match
+      those set at login
+- [ ] Register the route in `main.ts` (or wherever auth routes are mounted)
+- [ ] Verify auth middleware still blocks `/admin` after cookie is cleared
 
 ---
 
-## Task 2: Frontend — Login Page (Hono JSX SSR)
+## User Story: Owner Logout
 
 **Layer**: Frontend
 
@@ -98,54 +76,43 @@
 
 ### User Story Context
 
-**As an** owner
-**I want to** log in with my username and password
-**So that** I can access the admin dashboard to manage my short links
+**As an** owner\
+**I want to** log out of the admin dashboard\
+**So that** my session is ended and my links are protected on shared or
+untrusted devices
 
 ---
 
 ### Technical Scope
 
-#### Route
-
-**GET** `/login` — Renders the login page. If a valid JWT cookie is already present, redirects to `/admin` (handled in `src/handlers/auth.ts`).
-
 #### Components
 
-- `LoginPage` in `src/views/login.tsx` — Full-page server-rendered Hono JSX component. Contains:
-  - Username input field (`name="username"`, `type="text"`, `required`)
-  - Password input field (`name="password"`, `type="password"`, `required`)
-  - Submit button
-  - Inline error message area — conditionally rendered when an error string is passed as a prop (e.g., "Invalid username or password")
-  - Form `action="/login"` `method="POST"`
-
-- `Layout` in `src/views/layout.tsx` — Shared HTML shell (`<html>`, `<head>`, `<body>`) that wraps page components. `LoginPage` renders inside `Layout`.
-
-#### Handler
-
-- `handleLoginPage` in `src/handlers/auth.ts` — Renders `LoginPage` via Hono JSX. Accepts an optional error prop passed from a failed `POST /login` attempt (redirect back to GET `/login` with query param or flash state).
+- `dashboard.tsx` (or `layout.tsx`) — Add a logout button visible on the admin
+  dashboard at all times
+  - The button must submit a `POST` request to `/auth/logout`
+  - Implement as an HTML `<form method="POST" action="/auth/logout">` with a
+    submit button — no JavaScript required
+  - Button should be clearly labelled "Logout" and placed in a consistent,
+    discoverable location (e.g. top navigation bar or header)
 
 ---
 
 ### Notes
 
-- No JavaScript framework or client-side JS is needed — form submits natively via HTML POST
-- Error state after a failed login should be communicated server-side (e.g., query param `?error=1` on redirect back to GET `/login`), not via client JS
-- The form should preserve no field values after a failed login — both fields clear on re-render to avoid leaking the attempted password in the DOM
-- Hono JSX renders synchronously on the server; no hydration step
-- Depends on Task 1: the POST `/login` handler must exist for the form to submit to
+- No JavaScript is needed; a plain HTML form POST is sufficient given the
+  SSR-only frontend
+- Depends on the Backend task: `/auth/logout` endpoint must exist before the
+  button can be wired up
+- The form POST approach also works correctly when JavaScript is disabled in the
+  browser
 
 ---
 
 ### Implementation Tasks
 
-- [ ] Implement `Layout` component in `src/views/layout.tsx` — shared HTML shell
-- [ ] Implement `LoginPage` component in `src/views/login.tsx` — form + conditional error message
-- [ ] Implement `handleLoginPage` GET handler in `src/handlers/auth.ts` — render login page, pass error prop if `?error` query param present
-- [ ] Update `POST /login` handler to redirect back to `GET /login?error=1` on auth failure (instead of returning a raw error response)
-- [ ] Register `GET /login` route in `main.ts`
-- [ ] Verify form renders correctly and submits to `POST /login`
-- [ ] Verify error message appears after a failed login attempt
-- [ ] Verify both fields are empty after a failed login re-render
-- [ ] Verify successful login redirects to `/admin` and sets cookie
-- [ ] Code review
+- [ ] Add logout `<form>` with a submit button to the admin dashboard layout
+      (`layout.tsx` or `dashboard.tsx`)
+- [ ] Confirm the button is visible on all admin pages that use the shared
+      layout
+- [ ] Manually verify: click logout → redirected to `/login` → visiting `/admin`
+      redirects back to `/login`
