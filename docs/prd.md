@@ -98,12 +98,12 @@ untrusted devices
 
 ### Acceptance Criteria (User Perspective)
 
-- [ ] Owner can see a logout button while on the admin dashboard
-- [ ] Clicking logout immediately ends the session and redirects the owner to
+- [x] Owner can see a logout button while on the admin dashboard
+- [x] Clicking logout immediately ends the session and redirects the owner to
       `/login`
-- [ ] After logging out, visiting `/admin` redirects back to `/login` — the
+- [x] After logging out, visiting `/admin` redirects back to `/login` — the
       previous session is no longer valid
-- [ ] Logging out on one tab prevents access on other tabs without a page reload
+- [x] Logging out on one tab prevents access on other tabs without a page reload
       revealing protected content
 
 ---
