@@ -1,10 +1,14 @@
 {
   "imports": {
-    "hono": "jsr:@hono/hono@^4.12.21"
+    "@da/bcrypt": "jsr:@da/bcrypt@^1.0.1",
+    "@db/sqlite": "jsr:@db/sqlite@^0.13.0",
+    "hono": "jsr:@hono/hono@^4.12.21",
+    "jose": "npm:jose@^6.2.3"
   },
   "tasks": {
-    "dev": "deno run --watch --allow-net main.ts",
-    "start": "deno run --allow-net main.ts"
+    "dev": "deno run --watch --allow-net --allow-read --allow-write --allow-env --env-file --allow-ffi main.ts",
+    "start": "deno run --allow-net --allow-read --allow-write --allow-env --env-file main.ts",
+    "add-user": "deno run --allow-read --allow-write --allow-env --env-file scripts/add-user.ts"
   },
   "compilerOptions": {
     "jsx": "precompile",
