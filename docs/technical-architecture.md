@@ -208,6 +208,8 @@ users
   id            (integer, primary key, autoincrement)
   username      (text, not null, unique)
   password_hash (text, not null)
+  created_at    (datetime, not null, default now)
+  updated_at    (datetime, not null, default now)
 
 links
   id              (integer, primary key, autoincrement)
@@ -217,6 +219,7 @@ links
   expires_at      (datetime, nullable)
   created_at      (datetime, not null, default now)
   click_count     (integer, not null, default 0)
+  updated_at    (datetime, not null, default now)
 
 clicks
   id         (integer, primary key, autoincrement)
