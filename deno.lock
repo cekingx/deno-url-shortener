@@ -5,10 +5,14 @@
     "jsr:@db/sqlite@0.13": "0.13.0",
     "jsr:@denosaurs/plug@1": "1.1.0",
     "jsr:@hono/hono@^4.12.21": "4.12.21",
+    "jsr:@std/assert@^1.0.19": "1.0.19",
     "jsr:@std/encoding@1": "1.0.10",
+    "jsr:@std/expect@*": "1.0.19",
+    "jsr:@std/expect@^1.0.19": "1.0.19",
     "jsr:@std/fmt@1": "1.0.10",
     "jsr:@std/fs@1": "1.0.23",
     "jsr:@std/internal@^1.0.12": "1.0.13",
+    "jsr:@std/internal@^1.0.13": "1.0.13",
     "jsr:@std/path@1": "1.1.4",
     "jsr:@std/path@1.0": "1.0.9",
     "jsr:@std/path@^1.1.4": "1.1.4",
@@ -37,8 +41,22 @@
     "@hono/hono@4.12.21": {
       "integrity": "27d39e6c93e123f206012b8ab3af70da887fe1da923ca945ec87d4b5f9ef5c94"
     },
+    "@std/assert@1.0.19": {
+      "integrity": "eaada96ee120cb980bc47e040f82814d786fe8162ecc53c91d8df60b8755991e",
+      "dependencies": [
+        "jsr:@std/internal@^1.0.12"
+      ]
+    },
     "@std/encoding@1.0.10": {
       "integrity": "8783c6384a2d13abd5e9e87a7ae0520a30e9f56aeeaa3bdf910a3eaaf5c811a1"
+    },
+    "@std/expect@1.0.19": {
+      "integrity": "25271785688c7ff902fa54875d6aa4001f552c5578f7f0fefb5b5aac1fc2ed8a",
+      "dependencies": [
+        "jsr:@std/assert",
+        "jsr:@std/internal@^1.0.13",
+        "jsr:@std/path@^1.1.4"
+      ]
     },
     "@std/fmt@1.0.10": {
       "integrity": "90dfba288802ac6de82fb31d0917eb9e4450b9925b954d5e51fc29ac07419db5"
@@ -46,7 +64,7 @@
     "@std/fs@1.0.23": {
       "integrity": "3ecbae4ce4fee03b180fa710caff36bb5adb66631c46a6460aaad49515565a37",
       "dependencies": [
-        "jsr:@std/internal",
+        "jsr:@std/internal@^1.0.12",
         "jsr:@std/path@^1.1.4"
       ]
     },
@@ -59,7 +77,7 @@
     "@std/path@1.1.4": {
       "integrity": "1d2d43f39efb1b42f0b1882a25486647cb851481862dc7313390b2bb044314b5",
       "dependencies": [
-        "jsr:@std/internal"
+        "jsr:@std/internal@^1.0.12"
       ]
     }
   },
@@ -73,6 +91,7 @@
       "jsr:@da/bcrypt@^1.0.1",
       "jsr:@db/sqlite@0.13",
       "jsr:@hono/hono@^4.12.21",
+      "jsr:@std/expect@^1.0.19",
       "npm:jose@^6.2.3"
     ]
   }

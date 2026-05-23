@@ -87,15 +87,19 @@ nginx-proxy-manager is the single external entry point. It handles TLS certifica
 
 ### Hono Application
 
-The application is a single Deno process. Its internal modules are organized as follows:
+The application is a single Deno process organized in three strict layers. Every domain area (auth, links, redirect) must follow this layered structure — no layer may skip a layer below it, and no layer may reach upward.
 
-| Module | Responsibility | Key Interface |
-|--------|---------------|---------------|
-| Auth | Login endpoint, JWT issuance, cookie management | `POST /login`, `POST /logout` |
-| Redirect | Short code lookup, expiry check, click recording, 302 response | `GET /:code` |
-| Link API | CRUD operations for links | `POST /api/links`, `PUT /api/links/:id`, `DELETE /api/links/:id` |
-| Admin UI | Server-rendered dashboard pages (list, create, edit) | `GET /admin/*` |
-| DB Client | SQLite connection wrapper, query helpers | Internal module, no HTTP surface |
+```
+Handler  →  Service  →  Repository
+```
+
+| Layer | Responsibility | May import |
+|-------|---------------|------------|
+| **Handler** (`src/handlers/`) | Parse HTTP request, call service, set cookies/redirects | Service interfaces only — no DB, no bcrypt, no JWT utils |
+| **Service** (`src/services/`) | Business logic, orchestration, validation | Repository interfaces and utility interfaces — no Hono, no HTTP |
+| **Repository** (`src/repositories/`) | All SQL queries — one repository per domain entity | DB client only |
+
+Dependencies are injected into services via constructor parameters typed as interfaces (not concrete classes). Concrete implementations are wired up once in `main.ts` and passed into the Hono context via a middleware — handlers retrieve them from `c.var`. This keeps every service unit-testable without a real database, real bcrypt calls, or a real JWT secret.
 
 Auth middleware runs on all `/admin/*` and `/api/*` routes. It validates the JWT from the httpOnly cookie and rejects unauthenticated requests with a redirect to the login page.
 
@@ -221,6 +225,72 @@ A redirect request arrives at `GET /:code`. The handler queries `links` for a ma
 
 ---
 
+## 10. Error Handling Conventions
+
+Services never throw. When an operation fails due to a business rule or expected condition (invalid credentials, not found, duplicate alias), the service returns an `Error` instance as a plain value. The caller — always a handler — checks `instanceof Error` and decides the HTTP response. Unexpected errors (DB crashes, programming mistakes) are the only errors that propagate as thrown exceptions; those are not caught in handlers and will surface as 500s.
+
+```typescript
+// Service — return Error as value, never throw for business failures
+async login(username: string, password: string): Promise<string | Error> {
+  const user = this.repo.findByUsername(username)
+  if (!user) return new Error('invalid credentials')
+
+  const valid = await this.password.compare(password, user.password_hash)
+  if (!valid) return new Error('invalid credentials')
+
+  return this.jwt.sign(user.id)
+}
+
+// Handler — check instanceof Error, handle HTTP concerns
+const result = await c.var.authService.login(username, password)
+if (result instanceof Error) return c.redirect('/login?error=1', 302)
+
+setCookie(c, 'token', result, { ... })
+return c.redirect('/admin', 302)
+```
+
+The return type of every service method that can fail must be `T | Error`. A handler that receives `T | Error` must narrow the type with `instanceof Error` before using the success value — the TypeScript compiler will enforce this.
+
+---
+
+## 11. Testing Expectations
+
+Unit tests cover services only. Handlers and repositories are not unit tested — handlers are thin HTTP wiring and repositories are thin SQL wrappers; both are better covered by integration or end-to-end tests when those are added.
+
+A service is testable because all its dependencies are injected interfaces. Tests construct a service with stub implementations of those interfaces — no real database, no real bcrypt, no `JWT_SECRET` environment variable required. Stubs are plain inline objects; no mocking library is needed.
+
+```typescript
+// Stub factory pattern used in all service tests
+const makeRepo = (user?: UserRow): UserRepository => ({
+  findByUsername: () => user,
+})
+
+const makeJwt = (overrides?: Partial<JwtUtils>): JwtUtils => ({
+  sign: () => Promise.resolve('signed-token'),
+  verify: () => Promise.resolve({ sub: '1' }),
+  ...overrides,
+})
+
+const makePassword = (valid: boolean): PasswordUtils => ({
+  compare: () => Promise.resolve(valid),
+})
+
+// Test — construct service with stubs, assert return value
+Deno.test('login - returns error when password is wrong', async () => {
+  const service = new AuthService(
+    makeRepo({ id: 1, password_hash: 'hash' }),
+    makeJwt(),
+    makePassword(false),
+  )
+  const result = await service.login('user', 'wrong')
+  expect(result).toBeInstanceOf(Error)
+})
+```
+
+Test files live alongside the module they test (`auth.service.test.ts` next to `auth.service.ts`). The test runner is `deno task test`. Assertions use `@std/expect` for a Jest-compatible `expect` API.
+
+---
+
 ## 12. Appendix: Project Structure
 
 ```
@@ -231,13 +301,19 @@ url-shortener/
 ├── Dockerfile                  # Deno runtime image, non-root user
 ├── .env.example                # Required env vars with placeholder values
 ├── src/
+│   ├── context.ts              # Hono Variables interface (injected services)
 │   ├── db/
 │   │   ├── client.ts           # SQLite connection singleton
 │   │   └── schema.ts           # CREATE TABLE IF NOT EXISTS statements
 │   ├── middleware/
 │   │   └── auth.ts             # JWT cookie validation middleware
-│   ├── handlers/
-│   │   ├── auth.ts             # Login / logout handlers
+│   ├── repositories/           # SQL queries — one file per domain entity
+│   │   └── user.repository.ts  # UserRepository interface + SqliteUserRepository
+│   ├── services/               # Business logic — unit testable, no HTTP/DB imports
+│   │   ├── auth.service.ts     # AuthService: login, verifyToken
+│   │   └── auth.service.test.ts
+│   ├── handlers/               # HTTP layer — parse request, call service, respond
+│   │   ├── auth.tsx            # Login / logout handlers
 │   │   ├── redirect.ts         # Short code lookup, click recording, 302
 │   │   ├── links.ts            # CRUD API handlers
 │   │   └── admin.ts            # Server-rendered admin UI handlers
