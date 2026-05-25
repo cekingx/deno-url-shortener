@@ -1,4 +1,5 @@
 import { Layout } from "./layout.tsx";
+import type { Link } from "../domain/link.ts";
 
 type FormValues = {
   destination?: string;
@@ -10,12 +11,16 @@ type DashboardPageProps = {
   success?: boolean;
   error?: "invalid_url" | "duplicate_alias";
   formValues?: FormValues;
+  links?: Link[];
+  baseUrl?: string;
 };
 
 export function DashboardPage({
   success,
   error,
   formValues = {},
+  links = [],
+  baseUrl = "",
 }: DashboardPageProps) {
   return (
     <Layout title="Dashboard — URL Shortener">
@@ -101,12 +106,103 @@ export function DashboardPage({
           </form>
         </section>
 
-        <section>
-          <p class="text-gray-500 text-sm">
-            No links yet. Create your first short link above.
-          </p>
+        <section class="bg-white rounded-lg shadow-sm">
+          <h2 class="text-base font-semibold px-6 py-4 border-b border-gray-100">
+            Your links
+          </h2>
+
+          {links.length === 0 ? (
+            <p class="text-gray-400 text-sm text-center py-12">
+              No links yet. Create your first short link above.
+            </p>
+          ) : (
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm">
+                <thead>
+                  <tr class="text-left text-xs text-gray-500 uppercase tracking-wide border-b border-gray-100">
+                    <th class="px-6 py-3 font-medium">Short URL</th>
+                    <th class="px-6 py-3 font-medium">Destination</th>
+                    <th class="px-6 py-3 font-medium">Clicks</th>
+                    <th class="px-6 py-3 font-medium">Expires</th>
+                    <th class="px-6 py-3 font-medium"></th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-50">
+                  {links.map((link) => (
+                    <LinkRow link={link} baseUrl={baseUrl} />
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </section>
       </div>
     </Layout>
   );
+}
+
+function LinkRow({ link, baseUrl }: { link: import("../domain/link.ts").Link; baseUrl: string }) {
+  const shortUrl = `${baseUrl}/${link.shortCode}`;
+  const expired = link.isExpired();
+
+  return (
+    <tr class="hover:bg-gray-50 transition-colors">
+      <td class="px-6 py-3 whitespace-nowrap">
+        <a
+          href={shortUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="text-indigo-600 hover:text-indigo-800 font-mono text-xs"
+        >
+          {shortUrl}
+        </a>
+      </td>
+      <td class="px-6 py-3 max-w-xs">
+        <span class="block truncate text-gray-600" title={link.destinationUrl}>
+          {link.destinationUrl}
+        </span>
+      </td>
+      <td class="px-6 py-3 text-gray-700 tabular-nums">{link.clickCount}</td>
+      <td class="px-6 py-3 whitespace-nowrap">
+        {link.expiresAt ? (
+          <span class="flex items-center gap-2">
+            <span class="text-gray-600">{formatDate(link.expiresAt)}</span>
+            {expired && (
+              <span class="inline-block px-1.5 py-0.5 text-xs bg-red-50 text-red-600 border border-red-200 rounded">
+                Expired
+              </span>
+            )}
+          </span>
+        ) : (
+          <span class="text-gray-400">Never</span>
+        )}
+      </td>
+      <td class="px-6 py-3 whitespace-nowrap">
+        <div class="flex items-center gap-3">
+          <a
+            href={`/admin/links/${link.id}/edit`}
+            class="text-xs text-gray-500 hover:text-gray-800 transition-colors"
+          >
+            Edit
+          </a>
+          <button
+            type="button"
+            class="text-xs text-red-400 hover:text-red-600 transition-colors cursor-pointer"
+            disabled
+          >
+            Delete
+          </button>
+        </div>
+      </td>
+    </tr>
+  );
+}
+
+function formatDate(iso: string): string {
+  const d = new Date(iso);
+  return d.toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
 }
