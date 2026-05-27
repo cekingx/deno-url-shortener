@@ -17,7 +17,9 @@ const makeLink = (overrides?: Partial<Link>): Link =>
 const makeRepo = (overrides?: Partial<LinkRepository>): LinkRepository => ({
   create: () => makeLink(),
   findAll: () => [],
+  findById: () => undefined,
   findByShortCode: () => undefined,
+  update: () => makeLink(),
   ...overrides,
 });
 
@@ -121,4 +123,95 @@ Deno.test("findAll - delegates to repo", () => {
   const repo = makeRepo({ findAll: () => links });
   const service = new LinkService(repo);
   expect(service.findAll()).toEqual(links);
+});
+
+// update tests
+
+Deno.test("update - returns error for invalid URL", () => {
+  const current = makeLink({ id: 1, shortCode: "abc123" });
+  const repo = makeRepo({ findById: () => current });
+  const service = new LinkService(repo);
+  const result = service.update(1, "not-a-url", null, null);
+  expect(result).toBeInstanceOf(Error);
+  expect((result as Error).message).toBe("invalid_url");
+});
+
+Deno.test("update - returns error when link not found", () => {
+  const repo = makeRepo({ findById: () => undefined });
+  const service = new LinkService(repo);
+  const result = service.update(99, "https://example.com", null, null);
+  expect(result).toBeInstanceOf(Error);
+  expect((result as Error).message).toBe("not_found");
+});
+
+Deno.test("update - returns error when alias is taken by a different link", () => {
+  const current = makeLink({ id: 1, shortCode: "abc123" });
+  const other = makeLink({ id: 2, shortCode: "taken" });
+  const repo = makeRepo({
+    findById: () => current,
+    findByShortCode: () => other,
+  });
+  const service = new LinkService(repo);
+  const result = service.update(1, "https://example.com", "taken", null);
+  expect(result).toBeInstanceOf(Error);
+  expect((result as Error).message).toBe("duplicate_alias");
+});
+
+Deno.test("update - same alias on same link is valid (no duplicate check trip)", () => {
+  const current = makeLink({ id: 1, shortCode: "my-alias", customAlias: "my-alias" });
+  const updated = makeLink({ id: 1, shortCode: "my-alias", destinationUrl: "https://new.com", customAlias: "my-alias" });
+  const repo = makeRepo({
+    findById: () => current,
+    findByShortCode: () => current,
+    update: () => updated,
+  });
+  const service = new LinkService(repo);
+  const result = service.update(1, "https://new.com", "my-alias", null);
+  expect(result).toBeInstanceOf(Link);
+  expect((result as Link).destinationUrl).toBe("https://new.com");
+});
+
+Deno.test("update - succeeds with new alias", () => {
+  const current = makeLink({ id: 1, shortCode: "abc123" });
+  const updated = makeLink({ id: 1, shortCode: "new-alias", customAlias: "new-alias" });
+  const repo = makeRepo({
+    findById: () => current,
+    findByShortCode: () => undefined,
+    update: () => updated,
+  });
+  const service = new LinkService(repo);
+  const result = service.update(1, "https://example.com", "new-alias", null);
+  expect(result).toBeInstanceOf(Link);
+  expect((result as Link).shortCode).toBe("new-alias");
+});
+
+Deno.test("update - clearing alias keeps existing short_code", () => {
+  const current = makeLink({ id: 1, shortCode: "abc123", customAlias: "old-alias" });
+  let captured: Parameters<LinkRepository["update"]>[1] | undefined;
+  const repo = makeRepo({
+    findById: () => current,
+    update: (_id, fields) => {
+      captured = fields;
+      return makeLink({ ...fields, id: 1 });
+    },
+  });
+  const service = new LinkService(repo);
+  service.update(1, "https://example.com", null, null);
+  expect(captured?.shortCode).toBe("abc123");
+  expect(captured?.customAlias).toBeNull();
+});
+
+Deno.test("update - clearing expiresAt passes null to repo", () => {
+  const current = makeLink({ id: 1, shortCode: "abc123", expiresAt: "2026-12-31" });
+  let captured: Parameters<LinkRepository["update"]>[1] | undefined;
+  const repo = makeRepo({
+    findById: () => current,
+    update: (_id, fields) => {
+      captured = fields;
+      return makeLink();
+    },
+  });
+  const service = new LinkService(repo);
+  service.update(1, "https://example.com", null, null);
+  expect(captured?.expiresAt).toBeNull();
 });

@@ -172,21 +172,21 @@ choose
 
 ### Acceptance Criteria (User Perspective)
 
-- [ ] Owner can see a create form on the `/admin` dashboard with a destination
+- [x] Owner can see a create form on the `/admin` dashboard with a destination
       URL field, an optional custom alias field, and an optional expiration date
       field
-- [ ] Submitting the form with a valid destination URL and no alias creates a
+- [x] Submitting the form with a valid destination URL and no alias creates a
       short link with a 6-character auto-generated code
-- [ ] Submitting the form with a valid destination URL and a custom alias
+- [x] Submitting the form with a valid destination URL and a custom alias
       creates a short link using that alias as the short code
-- [ ] Submitting the form with an optional expiration date records that expiry
+- [x] Submitting the form with an optional expiration date records that expiry
       on the new link
-- [ ] After a successful creation, the form is cleared, a success message is
+- [x] After a successful creation, the form is cleared, a success message is
       shown, and the new link appears at the top of the link list
-- [ ] Submitting a destination URL that is not a valid absolute URL (missing
+- [x] Submitting a destination URL that is not a valid absolute URL (missing
       http:// or https://) shows an inline error message and keeps the form
       populated with the entered values
-- [ ] Submitting a custom alias that is already in use by another link shows an
+- [x] Submitting a custom alias that is already in use by another link shows an
       inline error message and keeps the form populated with the entered values
 
 ---
@@ -224,19 +224,19 @@ expiration without deleting and recreating it
 
 ### Acceptance Criteria (User Perspective)
 
-- [ ] Owner can navigate to an edit page for any link in the dashboard list
-- [ ] The edit form at `/admin/links/:id/edit` is pre-populated with the link's
+- [x] Owner can navigate to an edit page for any link in the dashboard list
+- [x] The edit form at `/admin/links/:id/edit` is pre-populated with the link's
       current destination URL, custom alias, and expiration date
-- [ ] Owner can update any combination of the three fields and save the changes
-- [ ] After a successful save, the owner is redirected to the `/admin` dashboard
+- [x] Owner can update any combination of the three fields and save the changes
+- [x] After a successful save, the owner is redirected to the `/admin` dashboard
       and the updated link reflects the new values
-- [ ] Submitting a destination URL that is not a valid absolute URL (missing
+- [x] Submitting a destination URL that is not a valid absolute URL (missing
       http:// or https://) shows an inline error message and keeps the form
       populated with the entered values
-- [ ] Submitting a custom alias that is already in use by a different link shows
+- [x] Submitting a custom alias that is already in use by a different link shows
       an inline error message and keeps the form populated with the entered
       values
-- [ ] Owner can clear the expiration date field to make a previously expiring
+- [x] Owner can clear the expiration date field to make a previously expiring
       link permanent, and the change is saved correctly
 
 ---

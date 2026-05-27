@@ -39,6 +39,47 @@ export class LinkService {
   findAll(): Link[] {
     return this.repo.findAll();
   }
+
+  findById(id: number): Link | undefined {
+    return this.repo.findById(id);
+  }
+
+  update(
+    id: number,
+    destination: string,
+    alias: string | null,
+    expiresAt: string | null,
+  ): Link | Error {
+    if (!isValidUrl(destination)) return new Error("invalid_url");
+
+    const trimmedAlias = alias?.trim() || null;
+    if (trimmedAlias && !isValidAlias(trimmedAlias)) {
+      return new Error("invalid_alias");
+    }
+
+    const current = this.repo.findById(id);
+    if (!current) return new Error("not_found");
+
+    const newShortCode = trimmedAlias ?? current.shortCode;
+
+    if (trimmedAlias && trimmedAlias !== current.shortCode) {
+      const existing = this.repo.findByShortCode(trimmedAlias);
+      if (existing) return new Error("duplicate_alias");
+    }
+
+    try {
+      const updated = this.repo.update(id, {
+        shortCode: newShortCode,
+        destinationUrl: destination,
+        customAlias: trimmedAlias,
+        expiresAt: expiresAt?.trim() || null,
+      });
+      if (!updated) return new Error("not_found");
+      return updated;
+    } catch {
+      return new Error("duplicate_alias");
+    }
+  }
 }
 
 function isValidAlias(value: string): boolean {

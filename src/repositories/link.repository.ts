@@ -16,7 +16,12 @@ export interface LinkRepository {
     params: Pick<Link, "shortCode" | "destinationUrl" | "customAlias" | "expiresAt">,
   ): Link;
   findAll(): Link[];
+  findById(id: number): Link | undefined;
   findByShortCode(code: string): Link | undefined;
+  update(
+    id: number,
+    fields: Pick<Link, "shortCode" | "destinationUrl" | "customAlias" | "expiresAt">,
+  ): Link | undefined;
 }
 
 export class SqliteLinkRepository implements LinkRepository {
@@ -52,6 +57,16 @@ export class SqliteLinkRepository implements LinkRepository {
     return rows.map(rowToLink);
   }
 
+  findById(id: number): Link | undefined {
+    const row = this.db
+      .prepare(
+        `SELECT id, short_code, destination_url, custom_alias, expires_at, created_at, click_count
+         FROM links WHERE id = ?`,
+      )
+      .get<LinkRow>(id);
+    return row ? rowToLink(row) : undefined;
+  }
+
   findByShortCode(code: string): Link | undefined {
     const row = this.db
       .prepare(
@@ -59,6 +74,27 @@ export class SqliteLinkRepository implements LinkRepository {
          FROM links WHERE short_code = ?`,
       )
       .get<LinkRow>(code);
+    return row ? rowToLink(row) : undefined;
+  }
+
+  update(
+    id: number,
+    fields: Pick<Link, "shortCode" | "destinationUrl" | "customAlias" | "expiresAt">,
+  ): Link | undefined {
+    const row = this.db
+      .prepare(
+        `UPDATE links
+         SET short_code = ?, destination_url = ?, custom_alias = ?, expires_at = ?, updated_at = CURRENT_TIMESTAMP
+         WHERE id = ?
+         RETURNING id, short_code, destination_url, custom_alias, expires_at, created_at, click_count`,
+      )
+      .get<LinkRow>(
+        fields.shortCode,
+        fields.destinationUrl,
+        fields.customAlias ?? null,
+        fields.expiresAt ?? null,
+        id,
+      );
     return row ? rowToLink(row) : undefined;
   }
 }

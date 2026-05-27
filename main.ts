@@ -16,7 +16,11 @@ import {
   handleLogout,
 } from "./src/handlers/auth.tsx";
 import { handleDashboard } from "./src/handlers/admin.tsx";
-import { handleCreateLink } from "./src/handlers/links.ts";
+import {
+  handleCreateLink,
+  handleEditLink,
+  handleEditLinkPage,
+} from "./src/handlers/links.tsx";
 
 runMigrations(db);
 
@@ -47,5 +51,7 @@ app.use("/api/*", authMiddleware);
 
 app.get("/admin", handleDashboard);
 app.post("/admin/links", handleCreateLink);
+app.get("/admin/links/:id/edit", handleEditLinkPage);
+app.post("/admin/links/:id/edit", handleEditLink);
 
 Deno.serve({ port: 8001 }, app.fetch);
