@@ -12,9 +12,14 @@ export class LinkService {
   ): Link | Error {
     if (!isValidUrl(destination)) return new Error("invalid_url");
 
-    const shortCode = alias?.trim() || generateShortCode();
+    const trimmedAlias = alias?.trim() || undefined;
+    if (trimmedAlias && !isValidAlias(trimmedAlias)) {
+      return new Error("invalid_alias");
+    }
 
-    if (alias?.trim()) {
+    const shortCode = trimmedAlias || generateShortCode();
+
+    if (trimmedAlias) {
       const existing = this.repo.findByShortCode(shortCode);
       if (existing) return new Error("duplicate_alias");
     }
@@ -23,7 +28,7 @@ export class LinkService {
       return this.repo.create({
         shortCode,
         destinationUrl: destination,
-        customAlias: alias?.trim() || null,
+        customAlias: trimmedAlias || null,
         expiresAt: expiresAt?.trim() || null,
       });
     } catch {
@@ -34,6 +39,10 @@ export class LinkService {
   findAll(): Link[] {
     return this.repo.findAll();
   }
+}
+
+function isValidAlias(value: string): boolean {
+  return /^[a-zA-Z0-9_-]+$/.test(value);
 }
 
 function isValidUrl(value: string): boolean {

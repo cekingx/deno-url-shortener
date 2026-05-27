@@ -6,7 +6,9 @@ export function handleDashboard(c: Context<{ Variables: Variables }>) {
   const success = c.req.query("success") === "1";
   const rawError = c.req.query("error");
   const error =
-    rawError === "invalid_url" || rawError === "duplicate_alias"
+    rawError === "invalid_url" ||
+    rawError === "duplicate_alias" ||
+    rawError === "invalid_alias"
       ? rawError
       : undefined;
 

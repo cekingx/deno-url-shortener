@@ -9,7 +9,7 @@ type FormValues = {
 
 type DashboardPageProps = {
   success?: boolean;
-  error?: "invalid_url" | "duplicate_alias";
+  error?: "invalid_url" | "duplicate_alias" | "invalid_alias";
   formValues?: FormValues;
   links?: Link[];
   baseUrl?: string;
@@ -55,6 +55,12 @@ export function DashboardPage({
           {error === "duplicate_alias" && (
             <div class="bg-red-50 text-red-700 border border-red-200 rounded-md px-3 py-2 text-sm mb-4">
               That alias is already in use. Please choose a different one.
+            </div>
+          )}
+
+          {error === "invalid_alias" && (
+            <div class="bg-red-50 text-red-700 border border-red-200 rounded-md px-3 py-2 text-sm mb-4">
+              Alias may only contain letters, numbers, hyphens, and underscores — no spaces.
             </div>
           )}
 
