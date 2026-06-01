@@ -20,6 +20,7 @@ const makeRepo = (overrides?: Partial<LinkRepository>): LinkRepository => ({
   findById: () => undefined,
   findByShortCode: () => undefined,
   update: () => makeLink(),
+  delete: () => true,
   ...overrides,
 });
 
@@ -199,6 +200,34 @@ Deno.test("update - clearing alias keeps existing short_code", () => {
   service.update(1, "https://example.com", null, null);
   expect(captured?.shortCode).toBe("abc123");
   expect(captured?.customAlias).toBeNull();
+});
+
+// delete tests
+
+Deno.test("delete - returns error when link not found", () => {
+  const repo = makeRepo({ findById: () => undefined });
+  const service = new LinkService(repo);
+  const result = service.delete(99);
+  expect(result).toBeInstanceOf(Error);
+  expect((result as Error).message).toBe("not_found");
+});
+
+Deno.test("delete - returns true when link exists", () => {
+  const repo = makeRepo({ findById: () => makeLink() });
+  const service = new LinkService(repo);
+  const result = service.delete(1);
+  expect(result).toBe(true);
+});
+
+Deno.test("delete - calls repo.delete with correct id", () => {
+  let deletedId: number | undefined;
+  const repo = makeRepo({
+    findById: () => makeLink(),
+    delete: (id) => { deletedId = id; return true; },
+  });
+  const service = new LinkService(repo);
+  service.delete(42);
+  expect(deletedId).toBe(42);
 });
 
 Deno.test("update - clearing expiresAt passes null to repo", () => {

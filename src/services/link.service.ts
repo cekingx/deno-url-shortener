@@ -44,6 +44,13 @@ export class LinkService {
     return this.repo.findById(id);
   }
 
+  delete(id: number): true | Error {
+    const link = this.repo.findById(id);
+    if (!link) return new Error("not_found");
+    this.repo.delete(id);
+    return true;
+  }
+
   update(
     id: number,
     destination: string,

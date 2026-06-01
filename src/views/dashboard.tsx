@@ -9,7 +9,8 @@ type FormValues = {
 
 type DashboardPageProps = {
   success?: boolean;
-  error?: "invalid_url" | "duplicate_alias" | "invalid_alias";
+  deleted?: boolean;
+  error?: "invalid_url" | "duplicate_alias" | "invalid_alias" | "not_found" | "delete_failed";
   formValues?: FormValues;
   links?: Link[];
   baseUrl?: string;
@@ -17,6 +18,7 @@ type DashboardPageProps = {
 
 export function DashboardPage({
   success,
+  deleted,
   error,
   formValues = {},
   links = [],
@@ -43,6 +45,24 @@ export function DashboardPage({
           {success && (
             <div class="bg-green-50 text-green-700 border border-green-200 rounded-md px-3 py-2 text-sm mb-4">
               Link created successfully.
+            </div>
+          )}
+
+          {deleted && (
+            <div class="bg-green-50 text-green-700 border border-green-200 rounded-md px-3 py-2 text-sm mb-4">
+              Link deleted.
+            </div>
+          )}
+
+          {error === "not_found" && (
+            <div class="bg-red-50 text-red-700 border border-red-200 rounded-md px-3 py-2 text-sm mb-4">
+              Link not found.
+            </div>
+          )}
+
+          {error === "delete_failed" && (
+            <div class="bg-red-50 text-red-700 border border-red-200 rounded-md px-3 py-2 text-sm mb-4">
+              Failed to delete link. Please try again.
             </div>
           )}
 
@@ -191,13 +211,19 @@ function LinkRow({ link, baseUrl }: { link: import("../domain/link.ts").Link; ba
           >
             Edit
           </a>
-          <button
-            type="button"
-            class="text-xs text-red-400 hover:text-red-600 transition-colors cursor-pointer"
-            disabled
+          <form
+            method="post"
+            action={`/admin/links/${link.id}/delete`}
+            style="display:inline"
           >
-            Delete
-          </button>
+            <button
+              type="submit"
+              class="text-xs text-red-400 hover:text-red-600 transition-colors cursor-pointer"
+              onclick="return confirm('Delete this link? This cannot be undone.')"
+            >
+              Delete
+            </button>
+          </form>
         </div>
       </td>
     </tr>

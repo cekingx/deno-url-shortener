@@ -18,6 +18,7 @@ import {
 import { handleDashboard } from "./src/handlers/admin.tsx";
 import {
   handleCreateLink,
+  handleDeleteLink,
   handleEditLink,
   handleEditLinkPage,
 } from "./src/handlers/links.tsx";
@@ -53,5 +54,6 @@ app.get("/admin", handleDashboard);
 app.post("/admin/links", handleCreateLink);
 app.get("/admin/links/:id/edit", handleEditLinkPage);
 app.post("/admin/links/:id/edit", handleEditLink);
+app.post("/admin/links/:id/delete", handleDeleteLink);
 
 Deno.serve({ port: 8001 }, app.fetch);

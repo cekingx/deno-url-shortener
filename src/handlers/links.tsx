@@ -35,6 +35,20 @@ export function handleEditLinkPage(c: Context<{ Variables: Variables }>) {
   return c.html(<EditLinkPage link={link} />);
 }
 
+export function handleDeleteLink(c: Context<{ Variables: Variables }>) {
+  const id = Number(c.req.param("id"));
+  if (!Number.isInteger(id) || id <= 0) {
+    return c.redirect("/admin?error=not_found", 302);
+  }
+
+  const result = c.var.linkService.delete(id);
+  if (result instanceof Error) {
+    return c.redirect(`/admin?error=${result.message}`, 302);
+  }
+
+  return c.redirect("/admin?deleted=1", 302);
+}
+
 export async function handleEditLink(c: Context<{ Variables: Variables }>) {
   const id = Number(c.req.param("id"));
   const link = c.var.linkService.findById(id);

@@ -22,6 +22,7 @@ export interface LinkRepository {
     id: number,
     fields: Pick<Link, "shortCode" | "destinationUrl" | "customAlias" | "expiresAt">,
   ): Link | undefined;
+  delete(id: number): boolean;
 }
 
 export class SqliteLinkRepository implements LinkRepository {
@@ -96,6 +97,19 @@ export class SqliteLinkRepository implements LinkRepository {
         id,
       );
     return row ? rowToLink(row) : undefined;
+  }
+
+  delete(id: number): boolean {
+    this.db.exec("BEGIN");
+    try {
+      this.db.prepare("DELETE FROM clicks WHERE link_id = ?").run(id);
+      const changes = this.db.prepare("DELETE FROM links WHERE id = ?").run(id);
+      this.db.exec("COMMIT");
+      return changes > 0;
+    } catch (err) {
+      this.db.exec("ROLLBACK");
+      throw err;
+    }
   }
 }
 
